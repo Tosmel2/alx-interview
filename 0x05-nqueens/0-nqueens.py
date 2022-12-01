@@ -1,116 +1,68 @@
 #!/usr/bin/python3
-
+"""
+Solution to the nqueens problem
+"""
 import sys
 
-if len(sys.argv) != 2:
-    print("Usage: nqueens N")
-    exit(1)
-try:
-    dimension = int(sys.argv[1])
-except Exception as E:
-    print("N must be a number")
-    exit(1)
 
-if dimension < 4:
-    print("N must be at least 4")
-    exit(1)
+def backtrack(r, n, cols, pos, neg, board):
+    """
+    backtrack function to find solution
+    """
+    if r == n:
+        res = []
+        for l in range(len(board)):
+            for k in range(len(board[l])):
+                if board[l][k] == 1:
+                    res.append([l, k])
+        print(res)
+        return
 
-board = {}
-for row in range(0, dimension):
-    for column in range(0, dimension):
-        placement = (row, column)
-        board[placement] = "#"
+    for c in range(n):
+        if c in cols or (r + c) in pos or (r - c) in neg:
+            continue
 
+        cols.add(c)
+        pos.add(r + c)
+        neg.add(r - c)
+        board[r][c] = 1
 
-def validate(board, spots):
-    """ Valitate the board """
-    if len([i for i in board.values() if i == "#"]) < spots and spots != 0:
-        return False
-    return True
+        backtrack(r+1, n, cols, pos, neg, board)
 
-
-def solve(dimension, index, board, safe_T, spots_L):
-    """ main loop for recursive """
-    if len(safe_T) > dimension:
-        return False
-    moved_board = fill_block(dimension, index, board)
-    if validate(moved_board, spots_L) and moved_board:
-        spots_L -= 1
-        inital = (index[0] + 1, index[1])
-        for i in range(dimension):
-            try:
-                if moved_board[(inital[0], i)] == "#":
-                    safe_T.append([inital[0], i])
-                    if not solve(
-                            dimension, (inital[0], i), moved_board,
-                            safe_T, spots_L):
-                        safe_T.pop()
-                        continue
-            except BaseException:
-                continue
-    if spots_L < 0 and len(safe_T) == dimension:
-        print(safe_T)
-    else:
-        return False
+        cols.remove(c)
+        pos.remove(r + c)
+        neg.remove(r - c)
+        board[r][c] = 0
 
 
-def fill_block(dimension, index, board_T):
-    """ function to fill queens available spots """
-    board = board_T.copy()
-    board[index] = 0
-    diagonal_C_neg_x = []
-    diagonal_C_pos_x = []
-    diagonal_C_neg_y = []
-    diagonal_C_pos_y = []
-    x = index[1]
-    while x - 1 >= 0:
-        less_x = (index[0], x - 1)
-        diagonal_C_neg_x.append(x - 1)
-        if board.get(less_x) == 0:
-            return False
-        board[less_x] = 1
-        x -= 1
+def nqueens(n):
+    """
+    Solution to nqueens problem
+    Args:
+        n (int): number of queens. Must be >= 4
+    Return:
+        List of lists representing coordinates of each
+        queen for all possible solutions
+    """
+    cols = set()
+    pos_diag = set()
+    neg_diag = set()
+    board = [[0] * n for i in range(n)]
 
-    y = index[0]
-    while y - 1 >= 0:
-        less_y = (y - 1, index[1])
-        diagonal_C_neg_y.append(y - 1)
-        if board.get(less_y) == 0:
-            return False
-        board[less_y] = 1
-        y -= 1
-
-    x = index[1]
-    while x + 1 < dimension:
-        more_x = (index[0], x + 1)
-        diagonal_C_pos_x.append(x + 1)
-        if board.get(more_x) == 0:
-            return False
-        board[more_x] = 1
-        x += 1
-
-    y = index[0]
-    while y + 1 < dimension:
-        more_y = (y + 1, index[1])
-        diagonal_C_pos_y.append(y + 1)
-        if board.get(more_y) == 0:
-            return False
-        board[more_y] = 1
-        y += 1
-
-    upper_left = tuple(zip(diagonal_C_pos_y, diagonal_C_neg_x))
-    upper_right = tuple(zip(diagonal_C_pos_y, diagonal_C_pos_x))
-    lower_left = tuple(zip(diagonal_C_neg_y, diagonal_C_neg_x))
-    lower_right = tuple(zip(diagonal_C_neg_y, diagonal_C_pos_x))
-    for ind in (upper_left + upper_right + lower_left + lower_right):
-        if board.get(ind) == 0:
-            return False
-        board[ind] = 1
-    return board
+    backtrack(0, n, cols, pos_diag, neg_diag, board)
 
 
-for i in range(0, dimension):
-    inital = (0, i)
-    safe_T = [list(inital)]
-    spots_L = dimension - 1
-    solve(dimension, inital, board, safe_T, spots_L)
+if __name__ == "__main__":
+    n = sys.argv
+    if len(n) != 2:
+        print("Usage: nqueens N")
+        sys.exit(1)
+    try:
+        nn = int(n[1])
+        if nn < 4:
+            print("N must be at least 4")
+            sys.exit(1)
+        nqueens(nn)
+    except ValueError:
+        print("N must be a number")
+        sys.exit(1)
