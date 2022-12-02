@@ -1,37 +1,45 @@
-
 #!/usr/bin/node
-const argv = process.argv;
-const urlFilm = 'https://swapi-api.hbtn.io/api/films/';
-const urlMovie = `${urlFilm}${argv[2]}/`;
 
+/**
+ * Star wars api
+ * Script that prints all characters of a Star Wars movie:
+ */
 const request = require('request');
+const filmId = process.argv[2];
+if (!filmId || isNaN(filmId)) {
+  process.exit(1);
+}
+const url = `https://swapi-api.hbtn.io/api/films/${filmId}`;
 
-request(urlMovie, function (error, response, body) {
-  if (error == null) {
-    const fbody = JSON.parse(body);
-    const characters = fbody.characters;
-
-    if (characters && characters.length > 0) {
-      const limit = characters.length;
-      CharRequest(0, characters[0], characters, limit);
-    }
-  } else {
+request(url, (error, response, body) => {
+  if (error) {
     console.log(error);
-  }
-});
-
-function CharRequest (idx, url, characters, limit) {
-  if (idx === limit) {
     return;
   }
-  request(url, function (error, response, body) {
-    if (!error) {
-      const rbody = JSON.parse(body);
-      console.log(rbody.name);
-      idx++;
-      CharRequest(idx, characters[idx], characters, limit);
-    } else {
-      console.error('error:', error);
-    }
+  const respPromises = [];
+
+  const json = JSON.parse(body);
+  const characters = json.characters;
+
+  characters.forEach((character) => {
+    const url = character;
+    const promise = new Promise((resolve, reject) => {
+      request(url, (error, response, body) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        const json = JSON.parse(body);
+        resolve(json.name);
+      });
+    });
+    respPromises.push(promise);
   });
-}
+  Promise.all(respPromises).then((values) => {
+    values.forEach((value) => {
+      console.log(value);
+    });
+  }).catch((error) => {
+    console.log(error);
+  });
+});
